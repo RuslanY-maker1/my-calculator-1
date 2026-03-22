@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Calculator</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .container { display: flex; gap: 20px; max-width: 900px; }
+        .calculator-wrapper { background: white; border-radius: 15px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); padding: 20px; width: 350px; }
+        .display-area { margin-bottom: 20px; }
+        .previous-input { font-size: 14px; color: #999; text-align: right; min-height: 20px; margin-bottom: 5px; }
+        #display { width: 100%; padding: 15px; font-size: 32px; text-align: right; border: 2px solid #ddd; border-radius: 8px; background: #f5f5f5; }
+        .buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        button { padding: 20px; font-size: 18px; border: none; border-radius: 8px; cursor: pointer; background: #e0e0e0; color: #333; font-weight: bold; transition: all 0.2s; }
+        button:hover { background: #d0d0d0; transform: scale(1.05); }
+        .operator { background: #ff9800; color: white; }
+        .operator:hover { background: #f57c00; }
+        .equals { background: #4caf50; color: white; grid-column: span 2; }
+        .equals:hover { background: #45a049; }
+        .clear { background: #f44336; color: white; grid-column: span 2; }
+        .clear:hover { background: #da190b; }
+        .delete-btn { background: #ff9800; color: white; }
+        .delete-btn:hover { background: #f57c00; }
+        .history-wrapper { background: white; border-radius: 15px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); padding: 20px; width: 300px; max-height: 500px; overflow-y: auto; }
+        .history-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #333; border-bottom: 2px solid #667eea; padding-bottom: 10px; }
+        .history-item { padding: 10px; margin-bottom: 8px; background: #f5f5f5; border-radius: 8px; border-left: 4px solid #667eea; font-size: 14px; }
+        .history-empty { color: #999; text-align: center; padding: 20px; }
+        @media (max-width: 768px) { .container { flex-direction: column; } .history-wrapper { width: 100%; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="calculator-wrapper">
+            <div class="display-area">
+                <div class="previous-input" id="previous-input"></div>
+                <input type="text" id="display" disabled placeholder="0">
+            </div>
+            <div class="buttons">
+                <button class="clear" onclick="clearDisplay()">C</button>
+                <button class="delete-btn" onclick="deleteLastChar()">←</button>
+                <button class="operator" onclick="appendOperator('/')">÷</button>
+                <button class="operator" onclick="appendOperator('*')">×</button>
+                
+                <button onclick="appendNumber('7')">7</button>
+                <button onclick="appendNumber('8')">8</button>
+                <button onclick="appendNumber('9')">9</button>
+                <button class="operator" onclick="appendOperator('-')">−</button>
+                
+                <button onclick="appendNumber('4')">4</button>
+                <button onclick="appendNumber('5')">5</button>
+                <button onclick="appendNumber('6')">6</button>
+                <button class="operator" onclick="appendOperator('+')">+</button>
+                
+                <button onclick="appendNumber('1')">1</button>
+                <button onclick="appendNumber('2')">2</button>
+                <button onclick="appendNumber('3')">3</button>
+                <button class="operator" onclick="appendOperator('%')">%</button>
+                
+                <button onclick="appendNumber('0')" style="grid-column: span 2;">0</button>
+                <button onclick="appendNumber('.')">.</button>
+                <button class="equals" onclick="calculateResult()">=</button>
+            </div>
+        </div>
+        
+        <div class="history-wrapper">
+            <div class="history-title">История вычеслений</div>
+            <div id="history-list" class="history-empty">Нет вычеслений</div>
+        </div>
+    </div>
+
+    <script>
+        let currentInput = '0';
+        let previousInput = '';
+        let operator = null;
+        let shouldResetDisplay = false;
+        let history = [];
+        
+        const displayElement = document.getElementById('display');
+        const previousInputElement = document.getElementById('previous-input');
+        const historyList = document.getElementById('history-list');
+
+        function updateDisplay() {
+            displayElement.value = currentInput;
+        }
+
+        function updatePreviousInput() {
+            if (operator && previousInput) {
+                previousInputElement.textContent = `${previousInput} ${operator}`;
+            } else {
+                previousInputElement.textContent = '';
+            }
+        }
+
+        function appendNumber(num) {
+            if (shouldResetDisplay) {
+                currentInput = num;
+                shouldResetDisplay = false;
+            } else {
+                if (currentInput === '0' && num !== '.') {
+                    currentInput = num;
+                } else if (num === '.' && currentInput.includes('.')) {
+                    return;
+                } else {
+                    currentInput += num;
+                }
+            }
+            updateDisplay();
+        }
+
+        function appendOperator(op) {
+            if (operator && !shouldResetDisplay) {
+                calculateResult();
+            }
+            previousInput = currentInput;
+            operator = op;
+            shouldResetDisplay = true;
+            updatePreviousInput();
+        }
+
+        function calculateResult() {
+            if (operator === null || shouldResetDisplay) {
+                return;
+            }
+
+            let result;
+            const prev = parseFloat(previousInput);
+            const current = parseFloat(currentInput);
+
+            switch (operator) {
+                case '+':
+                    result = prev + current;
+                    break;
+                case '-':
+                    result = prev - current;
+                    break;
+                case '*':
+                    result = prev * current;
+                    break;
+                case '/':
+                    result = current !== 0 ? prev / current : 0;
+                    break;
+                case '%':
+                    result = prev % current;
+                    break;
+                default:
+                    return;
+            }
+
+            const calculation = `${previousInput} ${operator} ${currentInput} = ${result}`;
+            addToHistory(calculation);
+            
+            currentInput = result.toString();
+            operator = null;
+            shouldResetDisplay = true;
+            updateDisplay();
+            updatePreviousInput();
+        }
+
+        function clearDisplay() {
+            currentInput = '0';
+            previousInput = '';
+            operator = null;
+            shouldResetDisplay = false;
+            updateDisplay();
+            updatePreviousInput();
+        }
+
+        function deleteLastChar() {
+            if (currentInput.length > 1) {
+                currentInput = currentInput.slice(0, -1);
+            } else {
+                currentInput = '0';
+            }
+            updateDisplay();
+        }
+
+        function addToHistory(calculation) {
+            history.unshift({
+                calculation: calculation,
+                date: new Date().toLocaleTimeString('ru-RU')
+            });
+            if (history.length > 20) {
+                history.pop();
+            }
+            updateHistoryDisplay();
+        }
+
+        function updateHistoryDisplay() {
+            if (history.length === 0) {
+                historyList.innerHTML = '<div class="history-empty">Нет вычеслений</div>';
+            } else {
+                historyList.innerHTML = history.map((item) => `
+                    <div class="history-item">
+                        <div>${item.calculation}</div>
+                        <span style="font-size: 12px; color: #999;">${item.date}</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        updateDisplay();
+    </script>
+</body>
+</html>
